@@ -1,0 +1,46 @@
+{:paths ["src" "resources"]
+ :deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        org.clojure/clojurescript {:mvn/version "1.11.57"}
+
+        ;; Component
+        com.stuartsierra/component {:mvn/version "1.1.0"}
+
+        ;; Async
+        org.clojure/core.async {:mvn/version "1.5.648"}
+
+        ;; Sorted collections
+        org.clojure/data.avl {:mvn/version "0.1.0"}
+
+        ;; specs
+        org.clojure/alpha.spec {:git/url "https://github.com/clojure/spec-alpha2.git"
+                                :sha "99456b1856a6fd934e2c30b17920bd790dd81775"}
+        org.clojure/test.check {:mvn/version "1.1.1"}
+
+        ;; clojure.core extension utilities
+        better-cond/better-cond {:mvn/version "2.1.4"}
+
+        ;; time libs
+        tick/tick {:mvn/version "0.5.0-RC6"}
+        com.widdindustries/cljc.java-time {:mvn/version "0.1.21"}
+
+        ;; HTTP/Websocket Client
+        hato/hato {:mvn/version "0.8.2"}
+
+        ;; Cryptography (Client signatures, etc...)
+        buddy/buddy-core {:mvn/version "1.10.413"}
+
+        ;; JSON
+        metosin/jsonista {:mvn/version "0.3.6"}
+
+        ;; Generate SQUUID
+        com.yetanalytics/colossal-squuid {:mvn/version "0.1.4"}}
+ :aliases
+ {:build {:deps {io.github.seancorfield/build-clj
+                 {:git/tag "v0.8.2" :git/sha "0ffdb4c"
+                  ;; since we're building an app uberjar, we do not
+                  ;; need deps-deploy for clojars.org deployment:
+                  :deps/root "slim"}}
+          :ns-default build}
+  :test {:extra-paths ["test"]
+         :extra-deps {io.github.cognitect-labs/test-runner
+                      {:git/tag "v0.5.1" :git/sha "5e91ee0"}}}}}
