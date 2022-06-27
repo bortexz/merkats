@@ -197,13 +197,14 @@
    (fn [{orders ::order/index :as sim} {::order/keys [id] :as o}]
      (if-let [curro (get orders id)]
        (cond-> sim
-         (not (#{::tx/taker} (-> curro ::order/parameters ::tx/actor )))
+         (not (#{::tx/taker} (-> curro ::order/parameters ::tx/actor)))
          (-> (update ::order-lb/book order-lb/remove-order curro)
              (remove-order curro)
              (add-order-update (-> curro
                                    (order/transition ::order/cancelled)
                                    (assoc ::order/cancellation ::order/created)))))
-       (add-order-update sim (merge o {::anomalies/category ::anomalies/not-found}))))
+       (add-order-update sim (merge o {::anomalies/category ::anomalies/not-found
+                                       ::order/cancellation ::order/rejected}))))
    (clean-update sim)
    os))
 
