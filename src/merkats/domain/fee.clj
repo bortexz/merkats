@@ -53,10 +53,10 @@
 
 (comment
   (with-precision 25
-    (accumulate-fees {::rate 0.5M ::balance/change 50M}
-                     {::rate 0.05M ::balance/change 5M}
-                     {::rate 0.1M ::balance/change 10M}
-                     {::rate 0.25M ::balance/change 30M}))
+    (accumulate-fees [{::rate 0.5M ::balance/change 50M}
+                      {::rate 0.05M ::balance/change 5M}
+                      {::rate 0.1M ::balance/change 10M}
+                      {::rate 0.25M ::balance/change 30M}]))
 
   ,)
 
