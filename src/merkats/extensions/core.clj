@@ -118,13 +118,9 @@
 ; --------------------------------------------------------------------------------------------------
 ; Misc
 
-(defn add-meta
+(defn merge-meta
   [obj m]
   (with-meta obj ((fnil merge {}) (meta obj) m)))
-
-(defn random-str-uuid
-  []
-  (str (random-uuid)))
 
 (defn current-millis [] (System/currentTimeMillis))
 

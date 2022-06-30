@@ -1,0 +1,5 @@
+{:indents {hangar.extensions.spec/def [[:inner 0]]
+           when-let [[:inner 0]]
+           if-let [[:inner 0]]
+           while-let [[:inner 0]]
+           hangar.extensions.core/while-let [[:inner 0]]}}
