@@ -23,30 +23,95 @@
      :as-map m
      :close (fn [] (run! a/close! chs-vec))}))
 
-(defn sample-time
-  "Similar to Rx sampleTime. Accepts input ch, ms and (optionally) buf-or-n for returning ch.
-   Returns a ch that will contain the latest value received on ch for the latest `ms`.
-   The sampling starts on the next value on the input ch after the previous send to the output chan,
-   not when sending to output chan."
-  ([ch ms]
-   (sample-time ch ms nil))
-  ([ch ms buf-or-n]
-   (let [out-ch (a/chan buf-or-n)
-         state_ (atom {:val nil
-                       :timer nil})
-         create-timer (fn []
-                        (delay
-                         (a/go
-                           (when (a/<! (a/timeout ms))
-                             (let [{:keys [val]} (swap! state_ assoc :timer nil)]
-                               (when val (a/>! out-ch val)))))))]
-     (a/go
-       (while-let [v (a/<! ch)]
-         (let [{:keys [timer]}
-               (swap! state_ (fn [{:keys [timer] :as state}]
-                               (let [timer (or timer (create-timer))]
-                                 (-> state
-                                     (assoc :val v)
-                                     (assoc :timer timer)))))]
-           @timer)))
-     out-ch)))
+(defn interval
+  "Given a number of milliseconds `ms` and output chan `out`, starts a process that will put a logical
+   true value every x `ms` on out chan. Returns a ch that can be closed to stop the process.
+   If close? is true, the out chan will be closed when the process is stopped."
+  ([ms out] (interval ms out true))
+  ([ms out close?]
+   (let [stop-ch (a/chan)]
+     (a/go-loop [timer (a/timeout ms)]
+       (a/alt!
+         [stop-ch timer]
+         ([_ port]
+          (condp = port
+            timer (do (a/>! out true) (recur (a/timeout ms)))
+            stop-ch (when close? (a/close! out))))))
+     stop-ch)))
+
+(defn sample
+  "Takes an input-ch and a sampler-ch, and creates a process that keeps taking values from input-ch,
+   and puts the latest one received on output ch whenever a value is taken from sampler-ch.
+   Doesn't put anything into output ch if a value is taken from sampler-ch without any new values from input-ch."
+  ([input sampler out]
+   (sample input sampler out true))
+  ([input sampler out close?]
+   (let [stop-ch (a/chan)
+         latest_ (atom nil)]
+     (a/go-loop []
+       (a/alt!
+         [input sampler stop-ch]
+         ([val port]
+          (condp = port
+            input (do (reset! latest_ val)
+                      (recur))
+            sampler (let [[o _] (reset! latest_ nil)]
+                      (when o (a/>! out o))
+                      (recur))
+            stop-ch (when close? (a/close! out))))))
+     stop-ch)))
+
+(defn sample-interval
+  ([ms inp out] (sample-interval ms inp out true))
+  ([ms inp out close?]
+   (let [sampler-ch (a/chan)
+         stop-sampler (interval ms sampler-ch)
+         stop-sample (sample inp sampler-ch out close?)]
+     (a/pipe stop-sample stop-sampler)
+     stop-sample)))
+
+(defn window
+  ([input sampler out] (window input sampler out))
+  ([input sampler out close?]
+   (let [stop-ch (a/chan)
+         vals_ (atom [])]
+     (a/go-loop []
+       (a/alt!
+         [input sampler stop-ch]
+         ([val port]
+          (condp = port
+            input (do (swap! vals_ conj val)
+                      (recur))
+            sampler (let [[o _] (swap! vals_ empty)]
+                      (when (seq o) (a/>! out o))
+                      (recur))
+            stop-ch (when close? (a/close! out))))))
+     stop-ch)))
+
+(defn window-n
+  ([n input out] (window-n n input out true))
+  ([n input out close?]
+   (let [stop-ch (a/chan)
+         vals_ (atom [])]
+     (a/go-loop []
+       (a/alt!
+         [input stop-ch]
+         ([val port]
+          (condp = port
+            input (let [xs (swap! vals_ conj val)]
+                    (when (>= (count xs) n) 
+                      (a/>! out xs)
+                      (swap! vals_ empty))
+                    (recur))
+            stop-ch (when close? (a/close! out))))))
+     stop-ch)))
+
+(defn window-interval
+  ([ms inp out] (window-interval ms inp out true))
+  ([ms inp out close?]
+   (let [sampler-ch (a/chan)
+         stop-sampler (interval ms sampler-ch)
+         stop-window (window inp sampler-ch out close?)]
+     (a/pipe stop-window stop-sampler)
+     stop-window)))
+
