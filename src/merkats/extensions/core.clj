@@ -1,12 +1,7 @@
 (ns merkats.extensions.core
   "Extensions to clojure core"
   (:refer-clojure :exclude [when-let if-let get-in])
-  (:require [better-cond.core :refer [when-let if-let]])
-  (:import (java.io InputStream)
-           (java.util.zip GZIPInputStream)))
-
-; --------------------------------------------------------------------------------------------------
-; Macro
+  (:require [better-cond.core :refer [when-let if-let]]))
 
 (defmacro while-let
   [bindings & body]
@@ -21,38 +16,21 @@
      (assert v# ~msg)
      v#))
 
-; Macro
-; --------------------------------------------------------------------------------------------------
-
-; --------------------------------------------------------------------------------------------------
-; Java IO
-
-(defn gzip-input-stream
-  "Create java.util.zip.GZIPInputStream from input-stream `is`"
-  [^InputStream i]
-  (GZIPInputStream. i))
-
-; Java IO
-; --------------------------------------------------------------------------------------------------
-
-; --------------------------------------------------------------------------------------------------
-; Comparators
-
 (def ascending-comparator  compare)
 (def descending-comparator (fn [a b] (compare b a)))
-
-; Comparators
-; --------------------------------------------------------------------------------------------------
-
-; --------------------------------------------------------------------------------------------------
-; Maps
 
 (defn get-in [m ks] (reduce get m ks))
 
 (defn move
   [m from to]
-  (if-some [v (get-in m from)]
-    (assoc-in m to v)
+  (if-some [v (get m from)]
+    (assoc m to v)
+    m))
+
+(defn move-in
+  [m from-path to-path]
+  (if-some [v (get-in m from-path)]
+    (assoc-in m to-path v)
     m))
 
 (defn filter-vals
@@ -63,12 +41,6 @@
                   (not (pred v)) (dissoc! k)))
               (transient m)
               m)))
-
-; Maps
-; --------------------------------------------------------------------------------------------------
-
-; --------------------------------------------------------------------------------------------------
-; Collections
 
 (defn queue
   "Create a queue, empty or from given `coll`."
@@ -99,24 +71,12 @@
   [f coll]
   (into {} (map (juxt f identity)) coll))
 
-; Collections
-; --------------------------------------------------------------------------------------------------
-
-; --------------------------------------------------------------------------------------------------
-; Atoms
-
 (defn pull!
   ([a_]
    (first (swap-vals! a_ empty)))
-  ([a_ path]
+  ([a_ & path]
    (let [[old _] (swap-vals! a_ (fn [v] (update-in v path empty)))]
      (get-in old path))))
-
-; Atoms
-; --------------------------------------------------------------------------------------------------
-
-; --------------------------------------------------------------------------------------------------
-; Misc
 
 (defn merge-meta
   [obj m]
@@ -124,5 +84,15 @@
 
 (defn current-millis [] (System/currentTimeMillis))
 
-; Misc
-; --------------------------------------------------------------------------------------------------
+;; Events
+
+(defn map-tuple
+  "Given arbitrary number of args, returns a n-ary maping fn that maps to a tuple as if (into args vs).
+   
+   E.g Mapping to transform data into events like [topic data]: (map-tuple :my-topic)"
+  [& args]
+  (map (fn map*
+         ([v1] (conj args v1))
+         ([v1 v2] (conj args v1 v2))
+         ([v1 v2 v3] (conj args v1 v2 v3))
+         ([v1 v2 v3 & v] (into (map* v1 v2 v3) v)))))

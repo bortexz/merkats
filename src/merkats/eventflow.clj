@@ -3,12 +3,12 @@
 ;; Protocols
 
 (defprotocol Node
-  (process [this input event] 
+  (process [this input data] 
            "Processes a new event. 
-            Returning a collection of tuples [output event] or nil."))
+            Returning a collection of tuples [output data] or nil."))
 
 (defprotocol Pipeline
-  (ingest [this id input event]
+  (ingest [this id input data]
           "Ingests a new `event` into `input` of node identified with `id`.")
   
   (add-node [this id node]

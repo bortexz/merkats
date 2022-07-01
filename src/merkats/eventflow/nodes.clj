@@ -9,8 +9,8 @@
    (let [newxf (comp xf (map (fn [v] [:output v])))]
      (reify
        ef/Node
-       (process [_ _ event]
-         (transduce newxf conj [event]))
+       (process [_ _ data]
+         (transduce newxf conj [data]))
 
        efa/Node
        (initialize [_]

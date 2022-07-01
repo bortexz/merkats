@@ -9,7 +9,7 @@
           Not recursive, will flush data accumulated up until -flush is called.
           Returns pipeline.")
   (pending [this]
-    "Returns collection of [id output event] of pending outputs to be flushed."))
+    "Returns collection of [id output data] of pending outputs to be flushed."))
 
 (defn pipeline
   "Creates a flushable pipeline.
@@ -44,9 +44,9 @@
                        (get [to-id to-input])))]
     (reify
       ef/Pipeline
-      (ingest [this id inp event]
+      (ingest [this id inp data]
         (let [node (get-node @state_ id)
-              os   (some-> node (ef/process inp event))]
+              os   (some-> node (ef/process inp data))]
           (assert node "A node for given `id` does not exist")
           (swap! state_ (fn [state]
                           (cond-> state
@@ -134,11 +134,11 @@
       (flush [this]
         (let [[o _] (swap-vals! state_ update :pending empty)
               to-ingest (mapcat
-                         (fn [[id out event]]
-                           (map (fn [[tid tinp]] [tid tinp event])
+                         (fn [[id out data]]
+                           (map (fn [[tid tinp]] [tid tinp data])
                                 (get (:links o) [id out])))
                          (:pending o))]
-          (run! (fn [[tid tinp event]] (ef/ingest this tid tinp event))
+          (run! (fn [[tid tinp data]] (ef/ingest this tid tinp data))
                 to-ingest)
           this))
 

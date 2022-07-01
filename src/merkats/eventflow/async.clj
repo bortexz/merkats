@@ -57,13 +57,13 @@
         run-fx      (fn [state] (force (:fx state)))]
     (reify
       ef/Pipeline
-      (ingest [this id input event]
+      (ingest [this id input data]
         (let [state @state_
               node (get-node-ps state id)
               ich (some-> node force ::input-chs (get input))]
           (assert node "Specified node does not exist")
           (assert ich "Specified input ch does not exist")
-          (a/>!! ich event)
+          (a/>!! ich data)
           this))
 
       (add-node [this id node]
@@ -176,13 +176,13 @@
          {och :->key ochm :as-map oclose :close} (ea/chs-map output-chs)
          ps (if thread?
               (a/thread
-               (while-let [[event port] (a/alts!! ichv)]
-                 (doseq [[o ev] (ef/process node (ichk port) event)]
+               (while-let [[data port] (a/alts!! ichv)]
+                 (doseq [[o ev] (ef/process node (ichk port) data)]
                    (a/>!! (och o) ev))))
               
               (a/go
-                (while-let [[event port] (a/alts! ichv)]
-                  (doseq [[o ev] (ef/process node (ichk port) event)]
+                (while-let [[data port] (a/alts! ichv)]
+                  (doseq [[o ev] (ef/process node (ichk port) data)]
                     (a/>! (och o) ev)))))
          
          td (fn [] (iclose) (a/<!! ps) (oclose))]
