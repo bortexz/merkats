@@ -6,7 +6,7 @@
    Rounds the given value to the closer step, setting the scale of the resulting decimal
    to same scale as step, using rm (by default RoundingMode/HALF_DOWN).
    Note: RoundingMode/HALF_EVEN is not supported, as both edges of a step could be even or odd.
-   `step` should be a positive decimal."
+   `step` must be a positive decimal."
   (^BigDecimal [^BigDecimal value ^BigDecimal step]
    (round-step value step RoundingMode/HALF_DOWN))
   (^BigDecimal [^BigDecimal value ^BigDecimal step ^RoundingMode rm]

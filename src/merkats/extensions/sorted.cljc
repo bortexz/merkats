@@ -96,8 +96,8 @@
 
 (defn offset
   "Takes the item at `n` items from key `k`.
-   e.g. (offset sc k -1) takes the previous item to `k`
-   e.g. (offset sc k 1) takes the next item to `k`.
+   e.g. (offset sc k -1) takes the previous item to key `k`
+   e.g. (offset sc k 1) takes the next item to key `k`.
    `k` must exist in `sc`, otherwise returns nil"
   [sc k n]
   (when-let [k-rank (avl/rank-of sc k)]
