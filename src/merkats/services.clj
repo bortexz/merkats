@@ -20,32 +20,26 @@
 
 ;; Streaming
 
-(defprotocol CloseStream :extend-via-metadata true
-  "Streams are core.async channels that implement this protocol via metadata.
-   Calling `-close-stream` must cleanup any resource on the producer's side (e.g.unsub from websocket, etc...), 
-   and then core.async/close! the chan." 
-  (-close-stream! [this]))
-
 (defprotocol StreamCandles :extend-via-metadata true
-  (-stream-candles [this instrument timeframe buf-or-n]))
+  (-stream-candles [this instrument timeframe out close?]))
 
 (defprotocol StreamOrderbook :extend-via-metadata true 
-  (-stream-orderbook [this instrument buf-or-n]))
+  (-stream-orderbook [this instrument out close?]))
 
 (defprotocol StreamTrades :extend-via-metadata true 
-  (-stream-trades [this instrument buf-or-n]))
+  (-stream-trades [this instrument out close?]))
 
 (defprotocol StreamOrderUpdates :extend-via-metadata true
-  (-stream-order-updates [this buf-or-n]))
+  (-stream-order-updates [this out close?]))
 
 (defprotocol StreamPositions :extend-via-metadata true
-  (-stream-positions [this buf-or-n]))
+  (-stream-positions [this out close?]))
 
 (defprotocol StreamBalances :extend-via-metadata true
-  (-stream-balances [this buf-or-n]))
+  (-stream-balances [this out close?]))
 
 (defprotocol StreamHistoricalTrades :extend-via-metadata true
-  (-stream-historical-trades [this instrument from to buf-or-n]))
+  (-stream-historical-trades [this instrument from to out close?]))
 
 ;; FNs
 
@@ -62,36 +56,48 @@
 
 (defn get-orderbook [provider instrument] (-get-orderbook provider instrument))
 
-(defn close-stream! [stream] (-close-stream! stream))
-
 ;; Realtime
 
 (defn stream-candles 
-  [provider instrument timeframe buf-or-n]
-  (-stream-candles provider instrument timeframe buf-or-n))
+  ([provider instrument timeframe out]
+   (stream-candles provider instrument timeframe out true))
+  ([provider instrument timeframe out close?]
+   (-stream-candles provider instrument timeframe out close?)))
 
 (defn stream-orderbook
-  [provider instrument buf-or-n]
-  (-stream-orderbook provider instrument buf-or-n))
+  ([provider instrument out]
+   (stream-orderbook provider instrument out true))
+  ([provider instrument out close?]
+   (-stream-orderbook provider instrument out close?)))
 
 (defn stream-trades
-  [provider instrument buf-or-n]
-  (-stream-trades provider instrument buf-or-n))
+  ([provider instrument out]
+   (stream-trades provider instrument out true))
+  ([provider instrument out close?]
+   (-stream-trades provider instrument out close?)))
 
-(defn stream-order-updates 
-  [provider buf-or-n]
-  (-stream-order-updates provider buf-or-n))
+(defn stream-order-updates
+  ([provider out]
+   (stream-order-updates provider out true))
+  ([provider out close?]
+   (-stream-order-updates provider out close?)))
 
 (defn stream-positions
-  [provider buf-or-n]
-  (-stream-positions provider buf-or-n))
+  ([provider out]
+   (stream-positions provider out true))
+  ([provider out close?]
+   (-stream-positions provider out close?)))
 
 (defn stream-balances
-  [provider buf-or-n]
-  (-stream-balances provider buf-or-n))
+  ([provider out]
+   (stream-balances provider out true))
+  ([provider out close?]
+   (-stream-balances provider out close?)))
 
 ;; Historical
 
 (defn stream-historical-trades
-  [provider instrument from to buf-or-n]
-  (-stream-historical-trades provider instrument from to buf-or-n))
+  ([provider instrument from to out]
+   (stream-historical-trades provider instrument from to out true))
+  ([provider instrument from to out close?]
+   (-stream-historical-trades provider instrument from to out close?)))

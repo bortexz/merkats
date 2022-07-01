@@ -84,8 +84,6 @@
 
 (defn current-millis [] (System/currentTimeMillis))
 
-;; Events
-
 (defn map-tuple
   "Given arbitrary number of args, returns a n-ary maping fn that maps to a tuple as if (into args vs).
    
