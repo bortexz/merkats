@@ -7,6 +7,7 @@
             [better-cond.core :refer [when-let if-let]]
             [merkats.extensions.core :refer [ascending-comparator]]
             [merkats.domain.candle :as candle]
+            [merkats.domain.candle.chart :as candlechart]
             [merkats.domain.time.interval :as interval]
             [merkats.extensions.sorted :as sort]))
 
@@ -75,6 +76,38 @@
 
 ; Formulas
 ; --------------------------------------------------------------------------------------------------
+
+(defn candlechart
+  "Given an initial chart, input-trades and input-candles (input nodes), creates a graph node whose
+   value is a candle/chart. 
+   
+   Combine it with [[chart->timeline]] and [[chart->candleseries]]"
+  [init-chart input-trades input-candles]
+  (g/compute-node
+   {::input-trades input-trades
+    ::input-candles input-candles}
+   (fn [val {::keys [input-trades input-candles]}]
+     (cond-> (or val init-chart)
+       input-trades (candlechart/ingest-trades input-trades)
+       input-candles (candlechart/ingest-delta input-candles)))))
+
+(defn candlechart->timeline
+  "Graph node that creates a timeline indicator from a chart value, using it's delta."
+  [chart-indicator]
+  (g/compute-node
+   {:charti chart-indicator}
+   (fn [_ {:keys [charti]}]
+     (base-timeline (::candlechart/delta charti)
+                    (::candlechart/max-candles charti)))))
+
+(defn- candlechart->series
+  "Given a candlechart indicator, returns it's candleseries, suitable to be used as the basis for other
+   indicators."
+  [chart-indicator]
+  (g/compute-node
+   {:charti chart-indicator}
+   (fn [_ {:keys [charti]}]
+     (::candlechart/series charti))))
 
 ; --------------------------------------------------------------------------------------------------
 ; Timeseries Indicators
