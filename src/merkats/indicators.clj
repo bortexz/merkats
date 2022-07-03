@@ -100,7 +100,7 @@
      (base-timeline (::candlechart/delta charti)
                     (::candlechart/max-candles charti)))))
 
-(defn- candlechart->series
+(defn candlechart->series
   "Given a candlechart indicator, returns it's candleseries, suitable to be used as the basis for other
    indicators."
   [chart-indicator]
