@@ -4,17 +4,15 @@
             [merkats.extensions.async :as ea]
             [merkats.extensions.core :refer [while-let]]))
 
-(defprotocol IProcess :extend-via-metadata true
-  (-input-chs [this] "Returns a map of {<input> <ch>}")
-  (-output-chs [this] "Returns a map of {<output> <ch>}")
-  (-shutdown [this] "Closes all internal chs and processes. Blocking."))
+(defrecord Process [input-chs output-chs shutdown-f])
 
 (defprotocol Node :extend-via-metadata true
   "Protocol to specify async nodes where inputs and outputs are core.async chs, and a setup is created
    to connect inputs to outputs.
    When working with async/Node, inputs and outputs need to be known in advance, to create channels for them."
   (initialize [this]
-    "Returns an instance of `IProcess`.
+    "Returns a `Process` (map/record with input-chs, output-chs and shutdown-f). See [[new-process]]
+     to create.
      
      Async Pipelines only need nodes to implement eventflow.async/Node, but not eventflow/Node,
      although making nodes implement eventflow/Node allows for better testability and to reuse nodes
@@ -160,17 +158,13 @@
       (links [_] (:links @state_)))))
 
 (defn new-process
-  "Creates a new `IProcess` (return type of `initialize`) from given input-chs, output-chs and shutdownf (nullary f)"
+  "Creates a new `Process` (return type of `initialize`) from given input-chs, output-chs and shutdownf (nullary f)"
   [input-chs output-chs shutdown-f]
-  (reify
-    IProcess
-    (-input-chs [_] input-chs)
-    (-output-chs [_] output-chs)
-    (-shutdown [_] (shutdown-f))))
+  (->Process input-chs output-chs shutdown-f))
 
-(defn alts-process
+(defn sequential-process
   ([node input-chs output-chs]
-   (alts-process node input-chs output-chs {}))
+   (sequential-process node input-chs output-chs {}))
   ([node input-chs output-chs {:keys [thread?] :or {thread? false}}]
    (let [{ichk :->ch ichv :as-vec ichm :as-map iclose :close} (ea/chs-map input-chs)
          {och :->key ochm :as-map oclose :close} (ea/chs-map output-chs)
