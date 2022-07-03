@@ -4,14 +4,14 @@
             [merkats.extensions.async :as ea]
             [merkats.extensions.core :refer [while-let]]))
 
-(defrecord Process [input-chs output-chs shutdown-f])
+(defrecord Setup [input-chs output-chs shutdown-f])
 
 (defprotocol Node :extend-via-metadata true
   "Protocol to specify async nodes where inputs and outputs are core.async chs, and a setup is created
    to connect inputs to outputs.
    When working with async/Node, inputs and outputs need to be known in advance, to create channels for them."
   (initialize [this]
-    "Returns a `Process` (map/record with input-chs, output-chs and shutdown-f). See [[new-process]]
+    "Returns a `Setup` (map/record with input-chs, output-chs and shutdown-f). See [[new-setup]]
      to create.
      
      Async Pipelines only need nodes to implement eventflow.async/Node, but not eventflow/Node,
@@ -45,7 +45,7 @@
                       (-> (get-node-ps state id)
                           (force)
                           ::process
-                          (-input-chs)
+                          :input-chs
                           (get input)))
         get-omult   (fn [state id output]
                       (-> (get-node-ps state id)
@@ -75,7 +75,7 @@
                          (delay
                           (run-fx state)
                           (let [ps (initialize node)
-                                output-mults (update-vals (-output-chs ps) (fn [och] (a/mult och)))]
+                                output-mults (update-vals (:output-chs ps) (fn [och] (a/mult och)))]
                             {::node node
                              ::output-mults output-mults
                              ::process ps}))]
@@ -99,7 +99,7 @@
                          new-nodes (dissoc nodes id)
                          new-fx (delay
                                  (run-fx state)
-                                 (-shutdown (::setup existing)))]
+                                 ((:shutdown-f (::setup existing))))]
                      (assoc state
                             :nodes new-nodes
                             :links new-links
@@ -157,14 +157,14 @@
       (nodes [_] (update-vals (:nodes @state_) (comp :node force)))
       (links [_] (:links @state_)))))
 
-(defn new-process
-  "Creates a new `Process` (return type of `initialize`) from given input-chs, output-chs and shutdownf (nullary f)"
+(defn new-setup
+  "Creates a new `Setup` (return type of `initialize`) from given input-chs, output-chs and shutdownf (nullary f)"
   [input-chs output-chs shutdown-f]
-  (->Process input-chs output-chs shutdown-f))
+  (->Setup input-chs output-chs shutdown-f))
 
-(defn sequential-process
+(defn sequential-setup
   ([node input-chs output-chs]
-   (sequential-process node input-chs output-chs {}))
+   (sequential-setup node input-chs output-chs {}))
   ([node input-chs output-chs {:keys [thread?] :or {thread? false}}]
    (let [{ichk :->ch ichv :as-vec ichm :as-map iclose :close} (ea/chs-map input-chs)
          {och :->key ochm :as-map oclose :close} (ea/chs-map output-chs)
@@ -180,11 +180,11 @@
                     (a/>! (och o) ev)))))
          
          td (fn [] (iclose) (a/<!! ps) (oclose))]
-     (new-process ichm ochm td))))
+     (new-setup ichm ochm td))))
 
-(defn parallel-process
+(defn parallel-setup
   ([node input-chs output-chs]
-   (parallel-process node input-chs output-chs {}))
+   (parallel-setup node input-chs output-chs {}))
   ([node input-chs output-chs {:keys [thread?-f] :or {thread?-f (constantly false)}}]
    (let [pschs (mapv 
                 (fn [[i ch]]
@@ -201,4 +201,4 @@
                     (run! a/close! (mapv second input-chs))
                     (run! a/<!! pschs)
                     (run! a/close! (mapv second output-chs)))]
-     (new-process input-chs output-chs shutdown))))
+     (new-setup input-chs output-chs shutdown))))
