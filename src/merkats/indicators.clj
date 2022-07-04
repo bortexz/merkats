@@ -185,8 +185,8 @@
   (timeseries
    tl 
    {:series series}
-   (fn map-ks-mean* [_ {:keys [mapseries]} k]
-     (when-let [m (get mapseries k)
+   (fn map-ks-mean* [_ {:keys [series]} k]
+     (when-let [m (get series k)
                 vals ((apply juxt ks) m)
                 _all? (every? some? vals)]
        (-mean vals)))))

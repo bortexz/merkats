@@ -24,8 +24,7 @@
             [tick.core :as t]
             [better-cond.core :refer [when-let if-let cond]]
             [clojure.string :as str]
-            [merkats.services :as services])
-  (:import (java.time ZoneOffset LocalDate)))
+            [merkats.services :as services]))
 
 (def ^:private ->tx-side
   {"Buy" ::tx/buy
@@ -364,9 +363,9 @@
               (when (seq q)
                 (a/alt!!
                   [[out (vec (peek q))]] (recur (pop q))
-                  stop-ch (do (reset! stopped?_ true)
-                              (when close? (a/close! out))))))
-            (recur (rest days))))))
+                  stop-ch (reset! stopped?_ true))))
+            (recur (rest days)))))
+      (when close? (a/close! out)))
     stop-ch))
 
 (defrecord HistoricalProvider []
@@ -381,8 +380,8 @@
   (def stop (stream-historical-trades
              nil
              "BTCUSD"
-             (t/instant "2022-01-01T00:00:00.00Z")
-             (t/instant "2022-01-02T00:00:00.00Z")
+             (t/instant "2022-04-01T00:00:00.00Z")
+             (t/instant "2022-04-02T00:00:00.00Z")
              out-ch
              true))
 
