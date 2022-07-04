@@ -17,7 +17,6 @@
             [merkats.domain.candle :as candle]
             [merkats.domain.balance :as balance]
             [merkats.domain.time.interval :as interval]
-            [merkats.stream :as stream]
             [cljc.java-time.instant :as t.i]
             [cljc.java-time.duration :as t.d]
             [cljc.java-time.local-date :as t.ld]
