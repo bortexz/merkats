@@ -15,4 +15,4 @@
        efa/Node
        (initialize [_]
          (let [ch (a/chan buf-or-n xf)]
-           (efa/new-process {:input ch} {:output ch} (fn [] (a/close! ch)))))))))
+           (efa/new-setup {:input ch} {:output ch} (fn [] (a/close! ch)))))))))
