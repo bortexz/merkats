@@ -45,15 +45,15 @@
               _? (or (not cancellation)
                      (#{::order/rejected} cancellation))
               co (assoc o ::order/cancellation ::order/in-flight)]
-       (-> ctrl
-           (update ::order/index assoc id co))))
+       (update ctrl ::order/index assoc id co)
+       ctrl))
    (dissoc ctrl ::order/updates)
    os))
 
 (defn ingest-remote-order-updates
   [ctrl ous]
   (reduce 
-   (fn [{idx ::order/index mkt ::market/market} {::order/keys [id] :as ou}]
+   (fn [{idx ::order/index mkt ::market/market :as ctrl} {::order/keys [id] :as ou}]
      (if-let [o (get idx id)
               :let [-ou (order-cy/ingest-update o ou mkt)
                     finished? (order/finished? -ou)]]

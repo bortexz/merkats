@@ -102,8 +102,9 @@
    ::tx/sell ::taker-sells})
 
 (defn- add-taker-order
-  [state {::tx/keys [side id] :as o}]
-  (let [newo (order/transition (order/init-execution o) ::order/created)]
+  [state {::order/keys [parameters id] :as o}]
+  (let [side (::tx/side parameters)
+        newo (order/transition (order/init-execution o) ::order/created)]
     (-> state
         (update (taker-side->queue side) conj id)
         (add-order newo)
@@ -148,7 +149,7 @@
           (not remt) sim
           (empty? q) sim
           (let [oid (peek q)
-                {::order/keys [parameters execution] :as o} (get orders (::order/id oid))
+                {::order/keys [parameters execution] :as o} (get orders oid)
                 ofilled (::tx/size execution)
                 orem    (- (::tx/size parameters) ofilled)
                 [otrade remt]  (if (< (::tx/size remt) orem)
@@ -157,7 +158,7 @@
                 otrade (add-fee otrade taker-fee)
                 newo (order/ingest-trade o otrade market)
                 finished? (order/finished? newo)
-                new-state (cond-> (add-order-update newo otrade)
+                new-state (cond-> (add-order-update sim newo otrade)
                             finished?       (-> (remove-order newo)
                                                 (update qk pop))
                             (not finished?) (add-order newo))]
