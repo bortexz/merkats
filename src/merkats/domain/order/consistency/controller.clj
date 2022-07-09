@@ -45,7 +45,9 @@
               _? (or (not cancellation)
                      (#{::order/rejected} cancellation))
               co (assoc o ::order/cancellation ::order/in-flight)]
-       (update ctrl ::order/index assoc id co)
+       (-> ctrl
+           (update ::order/index assoc id co)
+           (update ::order/updates conj-vec co))
        ctrl))
    (dissoc ctrl ::order/updates)
    os))

@@ -152,10 +152,14 @@
                 {::order/keys [parameters execution] :as o} (get orders oid)
                 ofilled (::tx/size execution)
                 orem    (- (::tx/size parameters) ofilled)
-                [otrade remt]  (if (< (::tx/size remt) orem)
+                
+                [otrade remt]  (if (<= (::tx/size remt) orem)
                                  [remt nil]
                                  (tx/split remt orem))
-                otrade (add-fee otrade taker-fee)
+                
+                otrade (-> otrade
+                           (merge {::trade/id (str (random-uuid))})
+                           (add-fee taker-fee))
                 newo (order/ingest-trade o otrade market)
                 finished? (order/finished? newo)
                 new-state (cond-> (add-order-update sim newo otrade)

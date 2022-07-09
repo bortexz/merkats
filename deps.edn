@@ -15,6 +15,7 @@
         org.clojure/alpha.spec {:git/url "https://github.com/clojure/spec-alpha2.git"
                                 :sha "99456b1856a6fd934e2c30b17920bd790dd81775"}
         org.clojure/test.check {:mvn/version "1.1.1"}
+        metosin/malli {:mvn/version "0.8.9"}
 
         ;; clojure.core extension utilities
         better-cond/better-cond {:mvn/version "2.1.4"}
